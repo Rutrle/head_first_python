@@ -17,7 +17,13 @@ def do_search() -> str:
     letters = request.form['letters']
 
     results = str(search4letters(word, letters))
+    log_request(request, results)
     return render_template('result.html', the_title=title, the_phrase=word, the_letters=letters, the_results=results)
+
+
+def log_request(req: 'flask_request', res: str) -> None:
+    with open('vsearch.txt', mode='w') as write_log:
+        print(req, res, file=write_log)
 
 
 if __name__ == '__main__':

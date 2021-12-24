@@ -12,10 +12,8 @@ def entry_page():
 
 def log_request(req: 'flask_request', res: str) -> None:
     with open('vsearch.log', mode='a') as write_log:
-        print(req.form, file=write_log)
-        print(req.remote_addr, file=write_log)
-        print(req.user_agent, file=write_log)
-        print(res, file=write_log)
+        print(req.form, req.remote_addr, req.user_agent,
+              res, file=write_log, sep='|')
 
 
 @app.route('/search4', methods=['POST'])

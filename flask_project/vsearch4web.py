@@ -28,10 +28,16 @@ def do_search() -> str:
 
 
 @app.route('/viewlog')
-def view_log() -> str:
+def view_log() -> 'html':
+    content = []
     with open('vsearch.log', mode='r') as log_file:
-        content = log_file.read()
-    return escape(content)
+        for line in log_file:
+            content.append([])
+            for item in line.split('|'):
+                content[-1].append(escape(item))
+
+    titles = ('Form_data', 'Remote_addr', 'User_agent', 'Results')
+    return render_template('viewlog.html', the_title='View Log', the_row_titles=titles, the_data=content)
 
 
 if __name__ == '__main__':

@@ -1,0 +1,1 @@
+database setup - https://stackoverflow.com/questions/52587142/creating-db-and-grant-syntax-error-in-mysql

@@ -1,8 +1,14 @@
 from flask import Flask, render_template, request, escape
+from DBcm import UseDatabase
 from vsearch import search4letters
 import mysql.connector
 
 app = Flask(__name__)
+
+app.config['dbconfig'] = {'host': '127.0.0.1',
+                          'user': 'vsearch',
+                          'password': 'vsearchpasswd',
+                          'database': 'vsearchlogDB', }
 
 
 @app.route('/')
@@ -12,25 +18,17 @@ def entry_page():
 
 
 def log_request(req: 'flask_request', res: str) -> None:
-    dbconfig = {'host': '127.0.0.1',
-                'user': 'vsearch',
-                'password': 'vsearchpasswd',
-                'database': 'vsearchlogDB', }
-    conn = mysql.connector.connect(**dbconfig)
-    cursor = conn.cursor()
-    _SQL = """insert into log
-                (phrase, letters, ip, browser_string, results)
-                values
-                (%s, %s, %s, %s, %s)"""
-    cursor.execute(_SQL, (req.form['phrase'],
-                          req.form['letters'],
-                          req.remote_addr,
-                          req.user_agent.browser,
-                          res, ))
 
-    conn.commit()
-    cursor.close()
-    conn.close()
+    with UseDatabase(app.config['dbconfig']) as cursor:
+        _SQL = """insert into log
+                    (phrase, letters, ip, browser_string, results)
+                    values
+                    (%s, %s, %s, %s, %s)"""
+        cursor.execute(_SQL, (req.form['phrase'],
+                              req.form['letters'],
+                              req.remote_addr,
+                              req.user_agent.browser,
+                              res, ))
 
 
 @app.route('/search4', methods=['POST'])

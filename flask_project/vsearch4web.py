@@ -44,14 +44,12 @@ def do_search() -> str:
 
 @app.route('/viewlog')
 def view_log() -> 'html':
-    content = []
-    with open('vsearch.log', mode='r') as log_file:
-        for line in log_file:
-            content.append([])
-            for item in line.split('|'):
-                content[-1].append(escape(item))
+    with UseDatabase(app.config['dbconfig']) as cursor:
+        _SQL = """select phrase, letters, ip, browser_string, results from log"""
+        cursor.execute(_SQL)
+        content = cursor.fetchall()
 
-    titles = ('Form_data', 'Remote_addr', 'User_agent', 'Results')
+    titles = ('Phrase', 'Letters' 'Remote_addr', 'User_agent', 'Results')
     return render_template('viewlog.html', the_title='View Log', the_row_titles=titles, the_data=content)
 
 

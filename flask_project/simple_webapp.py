@@ -1,5 +1,18 @@
-from flask import Flask
+from flask import Flask, session
 app = Flask(__name__)
+app.secret_key = 'YouWillNeverGuess'
+
+
+@app.route('/login')
+def do_login() -> str:
+    session['logged_in'] = True
+    return "You are now logged in"
+
+
+@app.route('logout')
+def do_logout() -> str:
+    session.pop('logged_in')
+    return "You have succesfully logged out"
 
 
 @app.route('/')

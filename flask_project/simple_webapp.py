@@ -9,10 +9,17 @@ def do_login() -> str:
     return "You are now logged in"
 
 
-@app.route('logout')
+@app.route('/logout')
 def do_logout() -> str:
     session.pop('logged_in')
     return "You have succesfully logged out"
+
+
+@app.route('/status')
+def check_status() -> str:
+    if 'logged_in' in session.keys():
+        return "You are currently logged in"
+    return "You are not logged in"
 
 
 @app.route('/')

@@ -3,6 +3,7 @@ from DBcm import UseDatabase
 from vsearch import search4letters
 import mysql.connector
 from checker import check_logged_in
+from time import sleep
 
 app = Flask(__name__)
 app.secret_key = 'YouWillNeverGuess'
@@ -32,7 +33,7 @@ def entry_page():
 
 
 def log_request(req: 'flask_request', res: str) -> None:
-
+    sleep(15)
     with UseDatabase(app.config['dbconfig']) as cursor:
         _SQL = """insert into log
                     (phrase, letters, ip, browser_string, results)

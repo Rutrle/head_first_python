@@ -1,9 +1,9 @@
 from flask import Flask, render_template, request, escape, session
-from DBcm import UseDatabase
+from DBcm import UseDatabase, ConnectionError, CredentialsError,  SQLError
 from vsearch import search4letters
-import mysql.connector
 from checker import check_logged_in
 from time import sleep
+
 
 app = Flask(__name__)
 app.secret_key = 'YouWillNeverGuess'
@@ -33,7 +33,7 @@ def entry_page():
 
 
 def log_request(req: 'flask_request', res: str) -> None:
-    sleep(15)
+
     with UseDatabase(app.config['dbconfig']) as cursor:
         _SQL = """insert into log
                     (phrase, letters, ip, browser_string, results)
@@ -53,17 +53,30 @@ def do_search() -> str:
     letters = request.form['letters']
 
     results = str(search4letters(word, letters))
-    log_request(request, results)
+    try:
+        log_request(request, results)
+    except Exception as err:
+        print('***** Logging failed with this error: ', str(err))
     return render_template('result.html', the_title=title, the_phrase=word, the_letters=letters, the_results=results)
 
 
 @app.route('/viewlog')
 @check_logged_in
 def view_log() -> 'html':
-    with UseDatabase(app.config['dbconfig']) as cursor:
-        _SQL = """select phrase, letters, ip, browser_string, results from log"""
-        cursor.execute(_SQL)
-        content = cursor.fetchall()
+    try:
+        with UseDatabase(app.config['dbconfig']) as cursor:
+            _SQL = """select phrase, letters, ip, browser_string, results from log"""
+            cursor.execute(_SQL)
+            content = cursor.fetchall()
+
+    except CredentialsError as err:
+        print('User-id/Password issues. Error:', str(err))
+    except ConnectionError as err:
+        print('Is your database switched on? Error:', str(err))
+    except SQLError as err:
+        print('Is your query correct? Error:', str(err))
+    except Exception as err:
+        print('something went wrong: ', str(err))
 
     titles = ('Phrase', 'Letters' 'Remote_addr', 'User_agent', 'Results')
     return render_template('viewlog.html', the_title='View Log', the_row_titles=titles, the_data=content)

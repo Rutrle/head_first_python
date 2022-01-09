@@ -1,17 +1,37 @@
 import mysql.connector
 
 
+class ConnectionError(Exception):
+    pass
+
+
+class CredentialsError(Exception):
+    pass
+
+
+class SQLError(Exception):
+    pass
+
+
 class UseDatabase():
     def __init__(self, config_params: dict) -> None:
         self.configuration = config_params
 
     def __enter__(self) -> 'cursor':
-        self.conn = mysql.connector.connect(**self.configuration)
-        self.cursor = self.conn.cursor()  # self because it's also needed in the __exit__
+        try:
+            self.conn = mysql.connector.connect(**self.configuration)
+            self.cursor = self.conn.cursor()  # self because it's also needed in the __exit__
+            return self.cursor
+        except mysql.connector.errors.InterfaceError as err:
+            raise ConnectionError(err)
+        except mysql.connector.errors.ProgrammingError as err:
+            raise CredentialsError(err)
 
-        return self.cursor
-
-    def __exit__(self, *args, **kwargs) -> None:
+    def __exit__(self, exc_type, exc_value, exc_traceback) -> None:
         self.conn.commit()
         self.cursor.close()
         self.conn.close()
+        if exc_type is mysql.connector.errors.ProgrammingError:
+            raise SQLError(exc_value)
+        elif exc_type:
+            raise exc_type(exc_value)

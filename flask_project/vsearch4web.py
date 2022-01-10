@@ -1,9 +1,9 @@
-from flask import Flask, render_template, request, escape, session
+from flask import Flask, render_template, request, escape, session, copy_current_request_context
 from DBcm import UseDatabase, ConnectionError, CredentialsError,  SQLError
 from vsearch import search4letters
 from checker import check_logged_in
 from time import sleep
-
+from threading import Thread
 
 app = Flask(__name__)
 app.secret_key = 'YouWillNeverGuess'
@@ -32,29 +32,31 @@ def entry_page():
     return render_template('entry.html', the_title='welcome to search4letter on the web!')
 
 
-def log_request(req: 'flask_request', res: str) -> None:
-
-    with UseDatabase(app.config['dbconfig']) as cursor:
-        _SQL = """insert into log
-                    (phrase, letters, ip, browser_string, results)
-                    values
-                    (%s, %s, %s, %s, %s)"""
-        cursor.execute(_SQL, (req.form['phrase'],
-                              req.form['letters'],
-                              req.remote_addr,
-                              req.user_agent.browser,
-                              res, ))
-
-
 @app.route('/search4', methods=['POST'])
 def do_search() -> str:
+
+    @copy_current_request_context
+    def log_request(req: 'flask_request', res: str) -> None:
+        sleep(15)  # simulationg slow communication
+        with UseDatabase(app.config['dbconfig']) as cursor:
+            _SQL = """insert into log
+                        (phrase, letters, ip, browser_string, results)
+                        values
+                        (%s, %s, %s, %s, %s)"""
+            cursor.execute(_SQL, (req.form['phrase'],
+                                  req.form['letters'],
+                                  req.remote_addr,
+                                  req.user_agent.browser,
+                                  res, ))
+
     title = "Here are your results"
     word = request.form['phrase']
     letters = request.form['letters']
-
     results = str(search4letters(word, letters))
+
     try:
-        log_request(request, results)
+        t = Thread(target=log_request, args=(request, results))
+        t.start()
     except Exception as err:
         print('***** Logging failed with this error: ', str(err))
     return render_template('result.html', the_title=title, the_phrase=word, the_letters=letters, the_results=results)

@@ -37,4 +37,21 @@ with open('buzzers.csv', mode='r') as data:
     fts = {convert2ampm(k): v.title() for k, v in flights.items()}
 
 
-# 535
+wests = []
+for k, v in fts.items():
+    if v == 'West End':
+        wests.append(k)
+print(wests)
+
+wests_comp = [k for k, v in fts.items() if v == 'West End']
+print(wests_comp)
+
+
+when = {}
+for dest in set(fts.values()):
+    when[dest] = [k for k, v in fts.items() if v == dest]
+print(when)
+
+when_comp = {dest: [k for k, v in fts.items() if v == dest]
+             for dest in set(fts.values())}
+print(when_comp)
